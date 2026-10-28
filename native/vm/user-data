@@ -1,0 +1,33 @@
+#cloud-config
+# cloud-init для Ubuntu 24.04 в Hyper-V: пользователь, SSH-ключ, KVP-агент
+hostname: pg18-lab
+manage_etc_hosts: true
+timezone: UTC
+locale: en_US.UTF-8
+
+users:
+  - name: student
+    gecos: PostgreSQL Lab
+    groups: [adm, sudo]
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    lock_passwd: false
+    ssh_authorized_keys:
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPRdLRSj7SohVImqufzrEsRA3jCEeRqXihIiPY3PVce2 pg18lab
+
+ssh_pwauth: true
+disable_root: true
+
+chpasswd:
+  expire: false
+  users:
+    - name: student
+      password: student
+      type: text
+
+package_update: true
+
+runcmd:
+  - [ sh, -c, "DEBIAN_FRONTEND=noninteractive apt-get install -y linux-cloud-tools-virtual linux-tools-virtual >/dev/null 2>&1 || true" ]
+  - [ sh, -c, "systemctl enable --now hv-kvp-daemon >/dev/null 2>&1 || true" ]
+  - [ sh, -c, "sed -i 's/^#*PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config; systemctl restart ssh" ]
